@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load widget_tweaks %}
+{% load static %}
+{% load custom_tags %}
+{% load socialaccount %}
+{% block title %}
+    Login
+{% endblock title %}
+
+{% block content %}
+    {% if messages %}
+<div class="max-w-md mx-auto mt-4">
+    {% for message in messages %}
+    <div class="{% if message.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% elif message.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% elif message.tags == 'info' %}bg-blue-100 border-blue-400 text-blue-700{% elif message.tags == 'warning' %}bg-yellow-100 border-yellow-400 text-yellow-700{% endif %} border px-4 py-3 rounded relative mb-4" role="alert">
+        <span class="block sm:inline">{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+<div class="h-screen -mt-16 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full bg-white shadow-md rounded-lg p-6">
+    <!-- Title -->
+    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+        {% trans "Sign In" %}
+    </h1>
+
+    <!-- Form -->
+    <form method="post" action="{% url 'account_login' %}" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Non-Field Errors -->
+        {% if form.non_field_errors %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {% for error in form.non_field_errors %}
+            <p class="text-sm">{{ error|striptags }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Loop through form fields -->
+        {% for field in form %}
+        <div class="mb-4">
+            {% if field|is_checkbox %}
+            <div class="flex items-center space-x-2">
+                <!-- Checkbox -->
+                {{ field|add_class:"h-5 w-5 text-indigo-600 border-gray-300 rounded" }}
+
+                <!-- Label without colon -->
+                <label for="{{ field.id_for_label }}" class="text-sm font-medium text-gray-700">
+                    {{ field.label|strip_last_char }}
+                </label>
+            </div>
+            {% else %}
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                {{ field.label }}
+            </label>
+            {{ field|add_class:"block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm" }}
+            {% endif %}
+
+            <!-- Display field errors -->
+            {% if field.errors %}
+            <ul class="mt-2 text-sm text-red-600">
+                {% for error in field.errors %}
+                <li>{{ error|striptags }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Redirect Field -->
+        {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+
+        <!-- Submit Button -->
+        <div class="flex justify-center mt-4">
+    <button type="submit"
+            class="w-64 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-md focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-150">
+        {% trans "Sign In" %}
+    </button>
+</div>
+    </form>
+
+    <!-- Social Login Section -->
+    {% if SOCIALACCOUNT_ENABLED %}
+    <div class="mt-6 border-t pt-4">
+        <p class="text-center text-sm text-gray-600 mb-4">{% trans "Or sign in with" %}</p>
+
+        <!-- Google Login Button -->
+        <!-- Google Login Button -->
+<div class="flex justify-center mt-4">
+    <a href="{% provider_login_url 'google' %}"
+       class="w-64 px-6 py-2 border flex items-center gap-2 border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-gray-300 hover:shadow transition duration-150">
+        <img class="w-6 h-6" src="https://www.svgrepo.com/show/475656/google-color.svg" loading="lazy" alt="Google Logo">
+        <span class="font-medium text-sm">Login with Google</span>
+    </a>
+</div>
+
+    {% endif %}
+
+    <!-- Sign Up Link -->
+    <div class="mt-4 text-center">
+        <a href="{% url 'account_signup' %}"
+           class="text-indigo-600 hover:text-indigo-800 font-medium underline text-sm">
+            {% trans "I don't have an account" %}
+        </a>
+    </div>
+    <div class="mt-4 text-center">
+        <a href="{% url 'account_reset_password' %}"
+           class="text-indigo-600 hover:text-indigo-800 font-medium underline text-sm">
+            {% trans "Forgot password" %}
+        </a>
+    </div>
+</div>
+{% endblock content %}

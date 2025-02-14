@@ -18,6 +18,9 @@ from django.contrib import admin
 from django.urls import path,include
 import allauth.account.views as allauth_views
 from user.views import ConfirmEmailView,SignupView,PasswordResetDoneView,EmailView,RedirectView
+from django.conf import settings
+from django.conf.urls.static import static
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("accounts/register", SignupView.as_view(), name="account_signup"),
@@ -30,3 +33,6 @@ urlpatterns = [
     path("user/",include("user.urls")),
     path('accounts/', include('allauth.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns+=static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

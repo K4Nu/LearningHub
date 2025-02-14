@@ -4,5 +4,5 @@
 {% endblock %}
 
 {% block content %}
-<button hx-delete="{% url 'account_login' %}" hx-confirm="are you sure?">Click</button>
+{{request.user.profile.username}}
 {% endblock %}

@@ -41,6 +41,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractUser):
     username=None
     email = models.EmailField(unique=True)
+    last_seen=models.DateTimeField(null=True, blank=True)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 

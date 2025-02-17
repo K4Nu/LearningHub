@@ -1,0 +1,188 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{% endblock %}</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" />
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body class="bg-gray-100">
+  <!-- Navbar -->
+  <nav class="sticky top-0 w-full bg-white shadow-md z-50">
+    <div class="container mx-auto px-4 flex items-center justify-between h-16">
+      <!-- Left: Logo -->
+      <div class="text-lg font-bold text-gray-800">
+        Vault 77
+      </div>
+
+      <!-- Middle: Search Bar (hidden on small screens) -->
+      <div class="hidden md:flex items-center w-full max-w-md">
+        <div class="relative w-full">
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"
+               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1016.65 16.65l4.35 4.35zM14.1 9.6a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search"
+            class="w-full py-2 pl-10 pr-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+        </div>
+      </div>
+
+      <!-- Right: Profile Dropdown & Mobile Menu Button -->
+      <div class="flex items-center space-x-4">
+        <!-- Fire Icon -->
+        <div class="relative">
+          <button>
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                class="w-6 h-6 {% if request.user.profile.study_streak > 0 %}fire-icon{% else %}text-gray-400{% endif %}"
+                fill="none"
+                stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15.362 5.214A8.252 8.252 0 0 1 12 21
+                   8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601
+                   a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 18a3.75 3.75 0 0 0 .495-7.468
+                   5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001
+                   A3.75 3.75 0 0 0 12 18Z"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Profile Dropdown -->
+        <div class="relative">
+          <button id="profile-btn" class="flex items-center text-gray-700 hover:text-blue-600 focus:outline-none">
+            {% if not request.user.profile.avatar %}
+              <!-- Default icon if no avatar -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
+                   viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118
+                      a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+            {% else %}
+              <img src="{{ request.user.profile.avatar.url }}" alt="Profile" class="w-8 h-8 rounded-full">
+            {% endif %}
+          </button>
+          <!-- Dropdown Menu -->
+          <div id="dropdown-menu" class="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg hidden">
+            <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">My Account</a>
+            <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Settings</a>
+            <a href="{% url 'account_logout' %}" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Logout</a>
+          </div>
+        </div>
+
+        <!-- Mobile Menu Button (shows on small screens) -->
+        <button id="mobile-menu-button" class="md:hidden text-gray-700 hover:text-blue-600 focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
+               viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+    <a href="#" class="block px-4 py-3 hover:bg-gray-50">Cart</a>
+    <a href="#" class="block px-4 py-3 hover:bg-gray-50">Favorite</a>
+    <a href="#" class="block px-4 py-3 hover:bg-gray-50">My Account</a>
+    <a href="{% url 'account_logout' %}" class="block px-4 py-3 hover:bg-gray-50">Logout</a>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+    <div id="messages-container" class="max-w-md mx-auto mt-4">
+      {% for message in messages %}
+        <div class="{% if message.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% elif message.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% elif message.tags == 'info' %}bg-blue-100 border-blue-400 text-blue-700{% elif message.tags == 'warning' %}bg-yellow-100 border-yellow-400 text-yellow-700{% endif %} border px-4 py-3 rounded relative mb-4" role="alert">
+          <span class="block sm:inline">{{ message }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Main Content -->
+  {% block content %}{% endblock %}
+
+  <!-- Scripts -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // --------------------------------------------
+      // 1) Toggle profile dropdown
+      // --------------------------------------------
+      const profileBtn = document.getElementById('profile-btn');
+      const dropdownMenu = document.getElementById('dropdown-menu');
+
+      if (profileBtn && dropdownMenu) {
+        profileBtn.addEventListener('click', function (e) {
+          e.stopPropagation(); // Prevent the click from propagating to the document
+          dropdownMenu.classList.toggle('hidden');
+        });
+      }
+
+      // --------------------------------------------
+      // 2) Toggle mobile menu
+      // --------------------------------------------
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+
+      if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', function (e) {
+          e.stopPropagation(); // Prevent the click from propagating to the document
+          mobileMenu.classList.toggle('hidden');
+        });
+      }
+
+      // --------------------------------------------
+      // 3) Close dropdown and mobile menu if clicking outside
+      // --------------------------------------------
+      document.addEventListener('click', function (event) {
+        // Close dropdown menu if clicking outside
+        if (dropdownMenu && !profileBtn.contains(event.target) {
+          dropdownMenu.classList.add('hidden');
+        }
+
+        // Close mobile menu if clicking outside
+        if (mobileMenu && !mobileMenuButton.contains(event.target)) {
+          mobileMenu.classList.add('hidden');
+        }
+      });
+
+      // --------------------------------------------
+      // 4) Fade out messages after 3 seconds
+      // --------------------------------------------
+      const messageContainer = document.getElementById('messages-container');
+      if (messageContainer) {
+        setTimeout(function () {
+          messageContainer.classList.add('fade-out');
+          setTimeout(() => messageContainer.remove(), 500);
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>

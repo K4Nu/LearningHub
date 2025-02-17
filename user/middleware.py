@@ -1,7 +1,9 @@
+from django.utils import timezone
 from .forms import ProfileForm
 import json
 from django.forms.utils import ErrorDict, ErrorList
-
+from django.conf import settings
+from django.shortcuts import redirect
 
 class SimpleMiddleware:
     def __init__(self, get_response):
@@ -47,4 +49,15 @@ class SimpleMiddleware:
                 request.profile_form = None
 
         response = self.get_response(request)
+        return response
+
+class UpdateLastSeenMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if request.user.is_authenticated:
+            request.user.last_seen=timezone.now()
+            request.user.save(update_fields=['last_seen'])
         return response

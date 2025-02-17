@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 import allauth.account.views as allauth_views
-from user.views import ConfirmEmailView,SignupView,PasswordResetDoneView,EmailView,RedirectView
+from user.views import ConfirmEmailView,SignupView,PasswordResetDoneView,EmailView,RedirectView,PasswordChangeView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -28,6 +28,7 @@ urlpatterns = [
     path("accounts/confirm-email/<str:key>/", ConfirmEmailView.as_view(), name="account_confirm_email"),
     path("accounts/password/reset/done/",PasswordResetDoneView.as_view(),name="account_password_reset_done"),
     path("accounts/password/reset/key/done/",PasswordResetDoneView.as_view(),name="account_password_reset_key"),
+    path("accounts/password/change/",PasswordChangeView.as_view(),name="account_password_change"),
     path("accounts/email/",EmailView.as_view(),name="account_email"),
     path("accounts/reauthenticate/",RedirectView.as_view(),name="account_reauthenticate"),
     path("user/",include("user.urls")),

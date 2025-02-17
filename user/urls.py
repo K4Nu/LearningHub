@@ -7,4 +7,5 @@ app_name = 'user'
 urlpatterns = [
     path('', views.index, name='index'),
     path("create-profile/",views.ProfileCreateView.as_view(), name='create-profile'),
+    path("<slug:username>/", views.ProfileDashboardView.as_view(), name='profile-detail'),
 ]

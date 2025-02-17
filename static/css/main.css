@@ -1,0 +1,18 @@
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+}
+.fire-icon {
+  /* Initial color (orange) */
+  fill: #ff8c00;
+  animation: fireFlicker 1s infinite alternate;
+}
+
+@keyframes fireFlicker {
+  0%   { fill: #ff8c00; }
+  20%  { fill: #ff4500; }
+  25%  { fill: #ff8c00; }
+  50%  { fill: #ff4500; }
+  60%  { fill: #ff8c00; }
+  100% { fill: #ff4500; }
+}

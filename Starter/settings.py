@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'user.middleware.SimpleMiddleware',
+    'user.middleware.UpdateLastSeenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "allauth.account.middleware.AccountMiddleware",
@@ -149,11 +150,13 @@ ACCOUNT_LOGIN_REDIRECT_URL = '/'
 
 # Login and logout settings
 LOGIN_URL = "/accounts/login/"
+SIGNUP_URL="/accounts/singup/"
 LOGOUT_URL = "/accounts/logout/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 ACCOUNT_LOGOUT_ON_GET=True
 SOCIALACCOUNT_LOGIN_ON_GET=True
+ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE=False
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

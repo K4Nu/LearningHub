@@ -2,17 +2,19 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-12 px-4 flex flex-col items-center justify-center">
+<div class="min-h-screen bg-gray-50 py-12 px-4 flex flex-col items-center">
   <!-- Profile Card -->
   <div class="bg-white shadow rounded-lg p-6 w-full max-w-md">
     <!-- Avatar (if any) -->
     {% if request.user.profile.avatar %}
       <div class="flex justify-center mb-4">
         <img
-          src="{{ request.user.profile.avatar.url }}"
-          alt="Profile Avatar"
-          class="w-24 h-24 rounded-full border-2 border-indigo-600"
-        />
+  id="prof_image"
+  src="{{ request.user.profile.avatar.url }}"
+  alt="Profile Avatar"
+  class="w-24 h-24 rounded-full border-2 border-indigo-600 cursor-pointer"
+  title="Change Profile Image"
+/>
       </div>
     {% endif %}
 
@@ -63,40 +65,4 @@
         <p class="text-gray-800">{{ request.user.profile.quizzes_score_avg }}</p>
       </div>
     </div>
-<hr>
-    <!-- Change Password Button (only if not social_account) -->
-    {% if not social_account %}
-      <div class="mt-6 flex justify-center">
-        <button
-          class="btn btn-primary"
-          onclick="password_modal.showModal()">
-          Change Password
-        </button>
-      </div>
-    {% endif %}
-  </div>
-
-  <!-- Modal for Password Change -->
-  {% if not social_account %}
-    <dialog id="password_modal" class="modal modal-bottom sm:modal-middle">
-      <div class="modal-box">
-        <h3 class="text-lg font-bold mb-3">Change Password</h3>
-        <!-- HTMX container for loading the form dynamically -->
-        <div
-          id="password-change-container"
-          hx-get="{% url 'account_change_password' %}"
-          hx-trigger="revealed"
-          hx-swap="innerHTML"
-        >
-          <div class="text-center">
-            <span class="loading loading-spinner loading-md"></span>
-          </div>
-        </div>
-        <div class="modal-action">
-          <button class="btn" onclick="password_modal.close()">Close</button>
-        </div>
-      </div>
-    </dialog>
-  {% endif %}
-</div>
 {% endblock %}

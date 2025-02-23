@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Test Page{% endblock %}
+
+{% block content %}
+
+<button class="btn"
+  onclick="my_modal_2.showModal()"
+  hx-get="{% url 'user:form-profile' %}"
+  hx-target="#modal-response"
+  hx-swap="innerHTML">
+  Open Profile Form
+</button>
+
+
+<button class="btn"
+hx-post="{% url 'user:delete-profile' %}"
+hx-confirm="Are you sure?">Delete User
+</button>
+<div id="profile-info"
+     hx-trigger="load, infoChanged from:body"
+     hx-get="{% url 'user:profile-info' %}"
+     hx-target="#profile-info"
+     hx-swap="innerHTML">
+</div>
+
+<dialog id="my_modal_2" class="modal">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold">Profile Form</h3>
+    <div id="modal-response" class="mt-4">
+      <!-- empty at first, filled after hx-get completes -->
+    </div>
+    <!-- Add a success message div -->
+    <div id="success-message" class="mt-4 text-green-600 hidden">
+      Profile updated successfully!
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>Close</button>
+  </form>
+</dialog>
+<script>
+  document.body.addEventListener("infoChanged", function()
+  {
+    document.querySelector("#my_modal_2").close();
+  });
+</script>
+<img src="https://cdn.pixabay.com/photo/2024/08/26/23/38/maranhao-sheets-9000410_960_720.jpg 1x, https://cdn.pixabay.com/photo/2024/08/26/23/38/maranhao-sheets-9000410_1280.jpg 2x">
+{% endblock %}

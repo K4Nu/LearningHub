@@ -21,7 +21,9 @@ class ProfileForm(forms.ModelForm):
         model = Profile
         fields = ['username', 'bio', 'avatar']
         widgets = {
-            "avatar": forms.FileInput(attrs={'class': 'form-control-file'}),
+            "avatar": forms.FileInput(attrs={
+                'class': 'file-input file-input-bordered',  # Base Daisy UI classes
+            }),
         }
 
     def clean_username(self):

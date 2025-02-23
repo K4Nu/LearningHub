@@ -1,5 +1,4 @@
 {% load static %}
-{% load custom_tags %}
 {% load widget_tweaks %}
 <!DOCTYPE html>
 <html lang="en" data-theme="{{theme}}">
@@ -20,6 +19,7 @@
 </head>
 
 <body class="bg-gray-100">
+{% load custom_tags %}
 {% if request.user.is_authenticated%}
 {% include 'partial/navbar.html'%}
 {%endif%}
@@ -40,7 +40,6 @@
       {% endfor %}
     </div>
   {% endif %}
-<h1>{{request.user.profile.theme}}</h1>
   <!-- Main Page Content -->
   {% block content %}{% endblock %}
 

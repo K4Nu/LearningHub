@@ -54,3 +54,19 @@ class ProfileForm(forms.ModelForm):
         else:
             raise forms.ValidationError("Avatar must be provided")
         return avatar
+
+class EmailForm(forms.Form):
+    email = forms.EmailField()
+    email2 = forms.EmailField()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get("email")
+        email2 = cleaned_data.get("email2")
+
+        if email and email2:
+            if email != email2:
+                raise forms.ValidationError("The two email addresses must match.")
+            if CustomUser.objects.filter(email=email).exists():
+                self.add_error("email", "Email already in use")
+        return cleaned_data

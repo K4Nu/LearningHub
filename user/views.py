@@ -1,4 +1,5 @@
 import requests
+from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount
 from django.contrib import messages
 from django.shortcuts import render,redirect
@@ -6,7 +7,7 @@ from allauth.account.views import ConfirmEmailView, SignupView, PasswordResetDon
 from django.contrib.messages import get_messages
 from django.urls import reverse_lazy
 from django.views.generic import View, FormView, CreateView, DetailView, TemplateView, UpdateView, DeleteView
-from .forms import ProfileForm
+from .forms import ProfileForm,EmailForm
 from PIL import Image
 import uuid
 import os
@@ -63,16 +64,19 @@ class PasswordResetDoneView(PasswordResetDoneView):
         messages.success(self.request, "Password reset successful.")
         return redirect("account_login")
 
-class EmailView(EmailView):
+class EmailView(LoginRequiredMixin, UpdateView):
+    model=CustomUser
+    form_class=EmailForm
 
-    def get(self, request, *args, **kwargs):
-        if not  request.headers.get("HX-Request"):
-            return redirect(reverse_lazy("user:index"))
-        return super().get(request, *args, **kwargs)
+    def get(self,request,*args, **kwargs):
+        return redirect("user:index")
 
-class RedirectView(View):
-    def get(self, request, *args, **kwargs):
-        return redirect(reverse_lazy("user:index"))
+    def form_valid(self,form):
+        email=form.cleaned_data.get('email')
+        user=self.request.user
+        curr_email=user.email
+        EmailAddress.objects.update_or_create(email=email,user=user,primary=True,verified=False)
+
 
 
 class ProfileCreateView(LoginRequiredMixin,CreateView):
@@ -161,19 +165,7 @@ class PasswordChangeView(AllauthPasswordChangeView):
 
         if self.request.headers.get("HX-Request"):
             messages.success(self.request, "Password changed successfully.")
-            return HttpResponse(
-                """
-                <div class="alert alert-success">Password changed successfully!</div>
-                <script>
-                  // Close the modal
-                  document.getElementById('password_modal').close();
-                  // Reload the page after 2 seconds
-                  setTimeout(function() {
-                    window.location.reload();
-                  }, 2000);
-                </script>
-                """
-            )
+            return HttpResponse("")
 
 
         return super().form_valid(form)

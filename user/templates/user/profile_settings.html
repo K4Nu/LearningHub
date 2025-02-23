@@ -3,6 +3,7 @@
 Profile Settings
 {%endblock%}
 {%block content%}
+{% load custom_tags %}
 <div id="profile-info"
      hx-trigger="load, infoChanged from:body"
      hx-get="{% url 'user:profile-info' %}"
@@ -20,7 +21,7 @@ Profile Settings
 <dialog id="user_modal" class="modal">
   <div class="modal-box">
     <h3 class="text-lg font-bold">Hello!</h3>
-    <p class="py-4">Press ESC key or click the button below to close</p>
+    <p class="py-4">Edit your profile information</p>
     <div id="modal-response">
       <!-- Form will be loaded here via HTMX -->
     </div>
@@ -87,10 +88,64 @@ Profile Settings
   </ul>
   </form>
 </div>
+<hr>
+{%  if not request.user|has_social_account %}
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+</svg>
+<p>Your password</p>
+<span>************</span>
+<button class="btn"
+  onclick="password_modal.showModal()"
+  hx-get="{% url 'account_password_change' %}"
+  hx-target="#modal-response2"
+  hx-swap="innerHTML">
+  Open Profile Form
+</button>
+
+<dialog id="password_modal" class="modal">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold">Password change</h3>
+    <p class="py-4">Change your password</p>
+    <div id="modal-response2">
+    </div>
+  </div>
+</dialog>
+
+<button class="btn"
+  onclick="email_modal.showModal()"
+  hx-get="{%url 'account_email' %}"
+  hx-target="email_modal">
+  Change Email
+</button>
+
+<dialog id="email_modal" class="modal">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold">Password change</h3>
+    <p class="py-4">Change your password</p>
+    <div id="modal-response3">
+    </div>
+  </div>
+</dialog>
+
+{%endif%}
 <script>
   document.body.addEventListener("infoChanged", function()
   {
     document.querySelector("#user_modal").close();
   });
+document.body.addEventListener('htmx:afterSwap', (event) => {
+  // Check if the swapped target is your modal's response container
+  if (event.detail.target.id === "modal-response2") {
+    const pform = event.detail.target.querySelector("form");
+    if (pform) {
+      pform.addEventListener('submit', function(event) {
+        event.preventDefault();
+        document.querySelector("#password_modal").close();
+      });
+    }
+  }
+});
+
 </script>
 {%endblock%}

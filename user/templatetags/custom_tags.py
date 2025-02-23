@@ -13,3 +13,7 @@ def strip_last_char(field):
     if isinstance(field,str):
         return field[:-1]
     return field
+
+@register.filter(name="has_social_account")  # Fixed: No extra space
+def has_social_account(user):  # Fixed: No extra space
+    return SocialAccount.objects.filter(user=user).exists()

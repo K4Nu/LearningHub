@@ -1,11 +1,13 @@
+import requests
+from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount
 from django.contrib import messages
 from django.shortcuts import render,redirect
-from allauth.account.views import ConfirmEmailView,SignupView,PasswordResetDoneView,EmailView
+from allauth.account.views import ConfirmEmailView, SignupView, PasswordResetDoneView, EmailView, logout
 from django.contrib.messages import get_messages
 from django.urls import reverse_lazy
-from django.views.generic import View, FormView, CreateView, DetailView
-from .forms import ProfileForm
+from django.views.generic import View, FormView, CreateView, DetailView, TemplateView, UpdateView, DeleteView
+from .forms import ProfileForm,EmailForm
 from PIL import Image
 import uuid
 import os
@@ -17,10 +19,11 @@ from .models import CustomUser,Profile,StudySession
 from allauth.account.forms import ChangePasswordForm
 from allauth.socialaccount.models import SocialAccount
 from allauth.account.views import PasswordChangeView as AllauthPasswordChangeView
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth import update_session_auth_hash
 from django.template.loader import render_to_string
-
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 class SignupView(SignupView):
     def form_valid(self, form):
         response=super().form_valid(form)
@@ -61,19 +64,22 @@ class PasswordResetDoneView(PasswordResetDoneView):
         messages.success(self.request, "Password reset successful.")
         return redirect("account_login")
 
-class EmailView(EmailView):
+class EmailView(LoginRequiredMixin, UpdateView):
+    model=CustomUser
+    form_class=EmailForm
 
-    def get(self, request, *args, **kwargs):
-        if not  request.headers.get("HX-Request"):
-            return redirect(reverse_lazy("user:index"))
-        return super().get(request, *args, **kwargs)
+    def get(self,request,*args, **kwargs):
+        return redirect("user:index")
 
-class RedirectView(View):
-    def get(self, request, *args, **kwargs):
-        return redirect(reverse_lazy("user:index"))
+    def form_valid(self,form):
+        email=form.cleaned_data.get('email')
+        user=self.request.user
+        curr_email=user.email
+        EmailAddress.objects.update_or_create(email=email,user=user,primary=True,verified=False)
 
 
-class ProfileCreateView(CreateView):
+
+class ProfileCreateView(LoginRequiredMixin,CreateView):
     model = Profile
     form_class = ProfileForm
     success_url = reverse_lazy("user:index")
@@ -84,7 +90,7 @@ class ProfileCreateView(CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         # Redirect if the user already has a profile
-        if request.user.is_authenticated and hasattr(request.user, "profile"):
+        if request.user.is_authenticated and hasattr(request.user, "profile") and not request.headers.get("HX-Request"):
             return redirect("index")
         return super().dispatch(request, *args, **kwargs)
 
@@ -127,7 +133,7 @@ class ProfileCreateView(CreateView):
 
         return redirect(self.success_url)
 
-class ProfileDashboardView(DetailView):
+class ProfileDashboardView(LoginRequiredMixin,DetailView):
     model = Profile
     slug_field = "username"
     slug_url_kwarg = "username"
@@ -159,21 +165,8 @@ class PasswordChangeView(AllauthPasswordChangeView):
 
         if self.request.headers.get("HX-Request"):
             messages.success(self.request, "Password changed successfully.")
-            return HttpResponse(
-                """
-                <div class="alert alert-success">Password changed successfully!</div>
-                <script>
-                  // Close the modal
-                  document.getElementById('password_modal').close();
-                  // Reload the page after 2 seconds
-                  setTimeout(function() {
-                    window.location.reload();
-                  }, 2000);
-                </script>
-                """
-            )
+            return HttpResponse("")
 
-        return super().form_valid(form)
 
         return super().form_valid(form)
 
@@ -181,3 +174,113 @@ class PasswordChangeView(AllauthPasswordChangeView):
         if self.request.headers.get("HX-Request"):
             return render(self.request, "account/password_change_form.html", {"form": form})
         return super().form_invalid(form)
+
+class TestView(LoginRequiredMixin,TemplateView):
+    template_name = "user/test.html"
+
+    def get_object(self):
+        return self.request.user
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)  # Call parent's get_context_data
+        context["form"] = ProfileForm(instance=self.request.user.profile)
+
+        return context
+
+
+class FormProfile(LoginRequiredMixin, UpdateView):
+    model = Profile
+    form_class = ProfileForm
+    template_name = "user/partial_profile.html"
+
+    def get_object(self, queryset=None):
+        return Profile.objects.get(user=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        if request.headers.get("HX-Request"):
+            return super().get(request, *args, **kwargs)
+        return redirect("user:profile-detail", username=request.user.profile.username)
+
+    def form_valid(self, form):
+        profile = form.save(commit=False)
+        profile.user = self.request.user
+        avatar = form.cleaned_data.get("avatar")
+        if avatar and avatar.name!=self.request.user.profile.avatar.name:
+            extension = os.path.splitext(avatar.name)[1].lower()
+            new_filename = f"{uuid.uuid4().hex}{extension}"
+            img = Image.open(avatar)
+            img.thumbnail((128, 128))
+            output = BytesIO()
+            # Map the extension to the correct PIL format
+            if extension in ['.jpg', '.jpeg']:
+                img_format = 'JPEG'
+            elif extension == '.png':
+                img_format = 'PNG'
+            else:
+                # Fallback to JPEG if somehow an unsupported extension gets through
+                img_format = 'JPEG'
+
+            img.save(output, format=img_format)
+            output.seek(0)
+
+            profile.avatar = InMemoryUploadedFile(
+                output,
+                "ImageField",
+                new_filename,
+                avatar.content_type,  # use the original content type
+                output.getbuffer().nbytes,
+                None
+            )
+
+        profile.save()
+
+        # Return an empty response with HX-Refresh header
+        return HttpResponse(status=204,headers={'HX-Trigger': 'infoChanged'})
+
+class ProfileInfoView(LoginRequiredMixin,TemplateView):
+    template_name = "user/partial_profile_info.html"
+
+    def get_context_data(self, queryset=None):
+        context=super().get_context_data()
+        context["profile"]=self.request.user.profile
+        return context
+
+class BackgroundImageView(View):
+    key="45952489-ff408b638bb31e70bc4675a3a"
+    url = f"https://pixabay.com/api/?key={key}&q=yellow+flowers&image_type=photo"
+    response=requests.get(url)
+
+class DeleteUserView(LoginRequiredMixin, DeleteView):
+    model = CustomUser
+    success_url = reverse_lazy("account_login")  # URL to redirect after deletion
+
+    def get_object(self, queryset=None):
+        # Ensure we're only deleting the current user
+        return self.request.user
+
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()
+        # Clean up related objects without redundant existence checks
+        SocialAccount.objects.filter(user=user).delete()
+        EmailView.objects.filter(user=user).delete()
+        response = super().delete(request, *args, **kwargs)
+        logout(request)
+        return response
+
+class ProfileSettingsView(LoginRequiredMixin, TemplateView):
+    template_name = 'user/profile_settings.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)  # Call parent's get_context_data
+        context["form"] = ProfileForm(instance=self.request.user.profile)
+
+class ProfileThemeView(LoginRequiredMixin, UpdateView):
+    model = Profile
+
+    def post(self, request, *args, **kwargs):
+        if request.headers.get("HX-Request"):
+            profile=request.user.profile
+            theme=request.POST.get("theme-dropdown")
+            profile.theme=theme
+            profile.save()
+            return JsonResponse({"status":"success"})

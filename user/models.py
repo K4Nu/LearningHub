@@ -77,6 +77,7 @@ class Profile(models.Model):
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    theme=models.CharField(max_length=100, default='Default')
 
     def __str__(self):
         return self.user.username

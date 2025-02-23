@@ -16,3 +16,7 @@
   60%  { fill: #ff8c00; }
   100% { fill: #ff4500; }
 }
+#prof_image:hover
+{
+    cursor: pointer;
+}

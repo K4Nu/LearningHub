@@ -1,8 +1,7 @@
 {% load static %}
-{% load custom_tags %}
 {% load widget_tweaks %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{theme}}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,6 +19,7 @@
 </head>
 
 <body class="bg-gray-100">
+{% load custom_tags %}
 {% if request.user.is_authenticated%}
 {% include 'partial/navbar.html'%}
 {%endif%}
@@ -40,7 +40,6 @@
       {% endfor %}
     </div>
   {% endif %}
-
   <!-- Main Page Content -->
   {% block content %}{% endblock %}
 
@@ -136,6 +135,9 @@
         });
       }
     {% endif %}
+       document.body.addEventListener('htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    })
   </script>
 </body>
 </html>

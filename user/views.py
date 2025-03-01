@@ -1,3 +1,5 @@
+import json
+
 import requests
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount
@@ -24,6 +26,13 @@ from django.contrib.auth import update_session_auth_hash
 from django.template.loader import render_to_string
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
+from django.db import transaction
+import json
+
+class RedirectView(View):
+    def get(self, request, *args, **kwargs):
+        return redirect('user:index')
+
 class SignupView(SignupView):
     def form_valid(self, form):
         response=super().form_valid(form)
@@ -67,17 +76,47 @@ class PasswordResetDoneView(PasswordResetDoneView):
 class EmailView(LoginRequiredMixin, UpdateView):
     model=CustomUser
     form_class=EmailForm
+    template_name="user/email_form.html"
 
-    def get(self,request,*args, **kwargs):
-        return redirect("user:index")
+    def get_object(self, queryset=None):
+        return self.request.user
 
-    def form_valid(self,form):
-        email=form.cleaned_data.get('email')
-        user=self.request.user
-        curr_email=user.email
-        EmailAddress.objects.update_or_create(email=email,user=user,primary=True,verified=False)
+    def dispatch(self, request, *args, **kwargs):
+        if not request.headers.get("HX-Request"):
+            return redirect("user:index")
+        return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs=super().get_form_kwargs()
+        kwargs.pop("instance",None)
+        return kwargs
 
+    def form_valid(self, form):
+        email = form.cleaned_data.get('email')
+        user = self.request.user
+
+        try:
+            with transaction.atomic():
+                # Update or create the EmailAddress
+                EmailAddress.objects.update_or_create(
+                    user=user,
+                    defaults={'email': email}
+                )
+
+                # Update the user's email
+                user.email = email
+                user.save()
+
+            return HttpResponse(status=204, headers={'HX-Trigger': 'emailChanged'})
+
+        except Exception as e:
+            # Log the error
+            print(f"Error updating email: {e}")
+            return HttpResponse(
+                "Failed to update email",
+                status=400,
+                headers={'HX-Trigger': 'emailError'}
+            )
 
 class ProfileCreateView(LoginRequiredMixin,CreateView):
     model = Profile
@@ -144,8 +183,6 @@ class ProfileDashboardView(LoginRequiredMixin,DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["password_form"]=ChangePasswordForm()
-        context["social_account"]=True if SocialAccount.objects.filter(user=self.request.user).exists() else False
         return context
 
 
@@ -283,4 +320,9 @@ class ProfileThemeView(LoginRequiredMixin, UpdateView):
             theme=request.POST.get("theme-dropdown")
             profile.theme=theme
             profile.save()
-            return JsonResponse({"status":"success"})
+            data = {"status": "success"}
+            return HttpResponse(
+                json.dumps(data),
+                content_type="application/json",
+                status=200
+            )

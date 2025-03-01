@@ -104,8 +104,12 @@
                 />
               </svg>
             {% else %}
-              <img src="{{ request.user.profile.avatar.url }}" alt="Profile" class="w-8 h-8 rounded-full">
-            {% endif %}
+<img id="profile-avatar"
+     hx-get="{% url 'user:profile-info' %}"
+     hx-trigger="load, infoChanged"
+     src="{{ request.user.profile.avatar.url }}"
+     alt="Profile"
+     class="w-8 h-8 rounded-full">          {% endif %}
           </button>
           <!-- Dropdown Menu -->
           <div

@@ -1,0 +1,38 @@
+{% load widget_tweaks %}
+<form method="POST"
+      hx-post="{% url 'account_email' %}"
+      hx-target="#modal-response3"
+      hx-swap="innerHTML">
+      {% csrf_token %}
+        <div class="space-y-4">
+    {% for field in form %}
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">{{ field.label }}</span>
+        </label>
+          {{ field|add_class:"input input-bordered w-full" }}
+
+        {% if field.help_text %}
+          <label class="label">
+            <span class="label-text-alt">{{ field.help_text }}</span>
+          </label>
+        {% endif %}
+
+        {% if field.errors %}
+          <label class="label">
+            <span class="label-text-alt text-error">{{ field.errors }}</span>
+          </label>
+        {% endif %}
+      </div>
+    {% endfor %}
+      <div class="modal-action">
+      <!-- Clicking 'Submit' sends an HTMX POST to the same URL -->
+      <button type="submit" class="btn">Submit</button>
+
+      <!-- Close the modal if you want to cancel -->
+      <button type="button" class="btn" onclick="email_modal.close()">
+        Close
+      </button>
+    </div>
+  </div>
+</form>

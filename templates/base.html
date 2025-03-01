@@ -19,13 +19,14 @@
 </head>
 
 <body class="bg-gray-100">
-{% load custom_tags %}
-{% if request.user.is_authenticated%}
-{% include 'partial/navbar.html'%}
-{%endif%}
-   <!-- Messages -->
+  {% load custom_tags %}
+  {% if request.user.is_authenticated %}
+    {% include 'partial/navbar.html' %}
+  {% endif %}
+
+  <!-- Messages -->
   {% if messages %}
-    <div id="messages-container" class="max-w-md mx-auto mt-4">
+    <div id="messages-container" class="w-11/12 sm:max-w-md mx-auto mt-4">
       {% for message in messages %}
         <div
           class="{% if message.tags == 'error' %}bg-red-100 border-red-400 text-red-700
@@ -40,13 +41,16 @@
       {% endfor %}
     </div>
   {% endif %}
+
   <!-- Main Page Content -->
-  {% block content %}{% endblock %}
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% block content %}{% endblock %}
+  </div>
 
   <!-- Modal for Profile Form (optional) -->
   {% if request.show_profile_modal and request.profile_form %}
     <dialog id="my_modal_1" class="modal">
-      <div class="modal-box">
+      <div class="modal-box w-11/12 max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl p-4 sm:p-6 overflow-y-auto max-h-[80vh]">
         <h3 class="text-lg font-bold">Form Submission</h3>
         <p class="py-4">Please fill out the following information:</p>
 
@@ -75,8 +79,10 @@
                   {{ field|add_class:"checkbox checkbox-primary" }}
                   <span class="ml-2 text-sm text-gray-600">{{ field.help_text }}</span>
                 </div>
-              {% elif field|widget_type == "file" %}
-                <div class="mt-1">
+
+              <!-- FIXED: Avatar field was being rendered twice. Now only rendered once with proper styling -->
+              {% elif field.name == 'avatar' %}
+                <div class="flex justify-center mt-1">
                   {{ field|add_class:"file-input file-input-bordered w-full max-w-xs" }}
                 </div>
               {% else %}
@@ -102,6 +108,10 @@
           </div>
         </form>
       </div>
+      <!-- Modal backdrop -->
+      <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+      </form>
     </dialog>
   {% endif %}
 
@@ -135,9 +145,14 @@
         });
       }
     {% endif %}
-       document.body.addEventListener('htmx:configRequest', (event) => {
-        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
-    })
+
+    // --------------------------------------------
+    // 3) Add CSRF token to HTMX requests
+    // --------------------------------------------
+    document.body.addEventListener('htmx:configRequest', (event) => {
+      event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    });
+
   </script>
 </body>
 </html>
